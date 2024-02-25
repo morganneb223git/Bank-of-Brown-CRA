@@ -1,0 +1,18 @@
+config:
+  target: "http://localhost:3000"  # Replace with the URL of your API
+  phases:
+    - duration: 40
+      arrivalRate: 5
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Create User"
+    flow:
+      - post:
+          url: "/users"
+          json:
+            name: "User {{ __ITER }}"
+            email: "user{{ __ITER }}@example.com"
+            password: "password"
