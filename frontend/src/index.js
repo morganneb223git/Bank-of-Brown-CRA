@@ -8,7 +8,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import NavBar from './navbar';
 import Home from './home';
 import CreateAccount from './createaccount';
-import Login from './login';
 import Deposit from './deposit';
 import Withdraw from './withdraw';
 import Balance from './balance';
@@ -31,7 +30,6 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/createaccount" element={<CreateAccount />} />
-            <Route path="/login" element={<Login />} />
             <Route path="/deposit" element={<ProtectedRoute component={Deposit} />} />
             <Route path="/withdraw" element={<ProtectedRoute component={Withdraw} />} />
             <Route path="/balance" element={<ProtectedRoute component={Balance} />} />

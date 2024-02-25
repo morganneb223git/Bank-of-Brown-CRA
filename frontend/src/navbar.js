@@ -19,9 +19,6 @@ function NavBar() {
             <LinkContainer to="/createaccount/">
               <Nav.Link>Create Account</Nav.Link>
             </LinkContainer>
-            <LinkContainer to="/login/">
-              <Nav.Link>Login</Nav.Link>
-            </LinkContainer>
             <LinkContainer to="/deposit/">
               <Nav.Link>Deposit</Nav.Link>
             </LinkContainer>
