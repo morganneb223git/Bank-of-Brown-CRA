@@ -12,6 +12,7 @@ import Deposit from './deposit';
 import Withdraw from './withdraw';
 import Balance from './balance';
 import AllData from './alldata';
+import Profile from './profile';
 
 function App() {
   const { loginWithRedirect, isAuthenticated, isLoading } = useAuth0();
@@ -33,6 +34,7 @@ function App() {
             <Route path="/deposit" element={<ProtectedRoute component={Deposit} />} />
             <Route path="/withdraw" element={<ProtectedRoute component={Withdraw} />} />
             <Route path="/balance" element={<ProtectedRoute component={Balance} />} />
+            <Route path="/profile" element={<ProtectedRoute component={Profile} />} />
             <Route path="/alldata" element={<ProtectedRoute component={AllData} />} />
           </Routes>
         </div>

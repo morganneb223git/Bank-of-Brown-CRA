@@ -41,6 +41,13 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Account number is required'],
     unique: true,
   },
+  // New role field
+  role: {
+    type: String,
+    required: true,
+    enum: ['user', 'admin', 'bank employee'], // Example roles
+    default: 'user', // Default role
+  },
 });
 
 /**

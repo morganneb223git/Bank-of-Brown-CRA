@@ -1,14 +1,15 @@
 ///NavBar Component ./frontend/src/navbar.js
+
 import React from 'react';
-import { Container, Navbar, Nav, Button } from 'react-bootstrap'; // Ensure Button is imported
+import { Container, Navbar, Nav, Dropdown } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import { useAuth0 } from '@auth0/auth0-react';
 
 function NavBar() {
-  const { isAuthenticated, logout } = useAuth0(); // Destructure logout method
+  const { isAuthenticated, logout, user } = useAuth0();
 
   return (
-    <Navbar bg="light" expand="lg">
+    <Navbar bg="light" expand="md"> {/* Adjust the breakpoint as needed */}
       <Container>
         <LinkContainer to="/">
           <Navbar.Brand>Bank of Brown</Navbar.Brand>
@@ -31,12 +32,22 @@ function NavBar() {
             <LinkContainer to="/alldata/">
               <Nav.Link>All Data</Nav.Link>
             </LinkContainer>
-            </Nav>
-          {/* Conditionally render Logout button if user is authenticated */}
+          </Nav>
           {isAuthenticated && (
-            <Button onClick={() => logout({ returnTo: window.location.origin })} variant="outline-danger">
-              Logout
-            </Button>
+            <Dropdown>
+              <Dropdown.Toggle variant="success" id="dropdown-basic">
+                {user.email} {/* Display the user's email or any identifier */}
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                <LinkContainer to="/profile">
+                  <Dropdown.Item as="button">Profile</Dropdown.Item>
+                </LinkContainer>
+                {/* If you have other navigation items, they can be included similarly */}
+                <Dropdown.Item onClick={() => logout({ returnTo: window.location.origin })}>
+                  Logout
+                </Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
           )}
         </Navbar.Collapse>
       </Container>

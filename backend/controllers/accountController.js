@@ -20,24 +20,30 @@ const saltRounds = 10; // Configuration for bcrypt password hashing
  */
 router.post('/create', async (req, res) => {
     const { name, email, password } = req.body;
+
     try {
         const users = await dal.find(email);
         if (users.length > 0) {
             return res.status(409).json({ message: 'User already exists' });
         }
 
-        bcrypt.hash(password, saltRounds, async (err, hash) => {
-            if (err) {
-                return res.status(500).json({ message: 'Error hashing password' });
-            }
-            const user = await dal.create(name, email, hash);
-            res.status(201).json(user);
-        });
+        // Generate a unique account number
+        const accountNumber = Math.floor(1000000000 + Math.random() * 9000000000);
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // Create the user with the hashed password and generated account number
+        const user = await dal.create({ name, email, password: hashedPassword });
+
+        // Respond with the user data including the account number
+        res.status(201).json({ message: 'Account successfully created', user, accountNumber });
     } catch (error) {
         console.error('Error creating user:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
 
 /**
  * POST /login

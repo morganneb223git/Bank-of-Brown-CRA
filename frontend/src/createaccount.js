@@ -44,8 +44,8 @@ function CreateForm(props) {
       tempErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       tempErrors.email = "Email is invalid";
-    } else if (!email.endsWith('.com')) { // Check if email ends with .com
-      tempErrors.email = "Email must end with .com";
+    } else if (!/\S+@\S+\.(com|org|edu)$/.test(email)) { // Updated line to check for .com, .org, or .edu
+      tempErrors.email = "Email must end with .com, .org, or .edu";
     }
     if (!password) {
       tempErrors.password = "Password is required";
@@ -59,6 +59,8 @@ function CreateForm(props) {
   function handle() {
     // Validate form before submitting
     if (!validateForm()) return;
+
+    console.log('Sending request with data:', { name, email, password }); // Add this line for debugging
 
     fetch('/account/create', {
       method: 'POST',
@@ -74,7 +76,8 @@ function CreateForm(props) {
     .then(data => {
       console.log(data);
       props.setShow(false);
-      props.setStatus('Account successfully created. Please log in.');
+      // Update the status message to include the account number
+      props.setStatus(`Account successfully created. Account Number: ${data.accountNumber}. Please log in.`);
       props.setVariant('success');
     })
     .catch(error => {
@@ -82,7 +85,8 @@ function CreateForm(props) {
       props.setStatus('Failed to create account. Please try again.');
       props.setVariant('danger');
     });
-  }
+}
+
 
   return (
     <Form>

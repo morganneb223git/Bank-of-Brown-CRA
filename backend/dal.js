@@ -141,18 +141,46 @@ async function createDocument(collectionName, document) {
  * @param {string} password User's password.
  * @returns The created user object.
  */
-async function create(name, email, password) {
+async function create({ name, email, password }) {
     try {
         const { db } = await connectToMongo();
         const collection = db.collection('users');
-        const doc = { name, email, password, balance: 0 };
+
+        // Generate an account number
+        const accountNumber = Math.floor(Math.random() * 1000000000);
+
+        const doc = {
+            name,
+            email,
+            password,
+            balance: 0,
+            accountNumber,
+            accountType: 'checking', // Assuming a default account type
+            role: 'user' // Assuming a default role
+        };
+
         const result = await collection.insertOne(doc);
-        return result.ops[0];
+        
+        // Ensure the accountNumber is also returned as part of the result
+        const insertedUser = {
+            _id: result.ops[0]._id,
+            name: result.ops[0].name, 
+            email: result.ops[0].email, 
+            password: result.ops[0].password, 
+            balance: result.ops[0].balance,
+            accountNumber,
+            accountType: result.ops[0].accountType,
+            role: result.ops[0].role
+        };
+
+        return insertedUser;
     } catch (err) {
         logger.error(`Error creating user: ${err.message}`, { stack: err.stack });
         throw err;
     }
 }
+
+
 
 /**
  * Finds users by email.
