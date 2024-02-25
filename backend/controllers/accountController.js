@@ -114,17 +114,22 @@ router.post('/findOne', async (req, res) => {
  * Updates user information for the specified email. Can update name and password.
  */
 router.post('/update', async (req, res) => {
-    const { email, name, password } = req.body;
-    try {
-        const updatedUser = await dal.update(email, { name, password });
-        if (!updatedUser) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(200).json({ message: 'User information updated successfully', user: updatedUser });
-    } catch (error) {
-        console.error('Error updating user information:', error);
-        res.status(500).json({ message: 'Internal server error' });
+  const { accountNumber, name, password } = req.body;
+  let updateData = { name };
+  if (password) {
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    updateData.password = hashedPassword;
+  }
+  try {
+    const updatedUser = await dal.update(accountNumber, updateData);
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
     }
+    res.status(200).json({ message: 'User information updated successfully', user: updatedUser });
+  } catch (error) {
+    console.error('Error updating user information:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 /**

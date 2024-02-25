@@ -222,19 +222,19 @@ async function findOne(email) {
  * @param {Object} newData New data for the user.
  * @returns The updated user object.
  */
-async function update(email, newData) {
-    try {
-        const { db } = await connectToMongo();
-        const result = await db.collection('users').findOneAndUpdate(
-            { email },
-            { $set: newData },
-            { returnDocument: 'after' }
-        );
-        return result.value;
-    } catch (err) {
-        logger.error(`Error updating user data: ${err.message}`, { stack: err.stack });
-        throw err;
-    }
+async function update(accountNumber, newData) {
+  try {
+    const { db } = await connectToMongo();
+    const result = await db.collection('users').findOneAndUpdate(
+      { accountNumber }, // Use accountNumber as the filter
+      { $set: newData },
+      { returnDocument: 'after' }
+    );
+    return result.value;
+  } catch (err) {
+    logger.error(`Error updating user data: ${err.message}`, { stack: err.stack });
+    throw err;
+  }
 }
 
 /**
