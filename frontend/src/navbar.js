@@ -18,7 +18,7 @@ function NavBar() {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             <LinkContainer to="/createaccount/">
-              <Nav.Link>Create Account</Nav.Link>
+              <Nav.Link>Create Bank Account</Nav.Link>
             </LinkContainer>
             <LinkContainer to="/deposit/">
               <Nav.Link>Deposit</Nav.Link>
