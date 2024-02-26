@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, Form, Button, Alert } from 'react-bootstrap';
 
 function Withdraw() {
@@ -11,17 +11,14 @@ function Withdraw() {
   const [balance, setBalance] = useState(0); // Added state for balance
   const [loadingBalance, setLoadingBalance] = useState(false); // Added state for loading balance
 
-  useEffect(() => {
-    // Fetch the user's balance when the email changes
+  // Function to fetch balance
+  const fetchBalance = () => {
     if (email) {
       setLoadingBalance(true);
-      fetch(`/account/balance/${email}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      })
+      fetch(`/account/balance/${email}`)
         .then(response => response.json())
         .then(data => {
-          setBalance(data.balance); // Assuming the API returns an object with a balance property
+          setBalance(data.balance);
           setLoadingBalance(false);
         })
         .catch(error => {
@@ -29,7 +26,7 @@ function Withdraw() {
           setLoadingBalance(false);
         });
     }
-  }, [email]);
+  };
 
   function handleWithdrawal() {
     // Reset status and variant
@@ -37,11 +34,7 @@ function Withdraw() {
     setVariant('success');
 
     const withdrawalAmount = parseFloat(amount);
-    if (isNaN(withdrawalAmount) || withdrawalAmount <= 0) {
-      setStatus('Amount must be a positive number.');
-      setVariant('danger');
-      return;
-    }
+    // Validation checks
 
     if (withdrawalAmount > balance) {
       setStatus('Withdrawal amount exceeds current balance.');
@@ -49,6 +42,7 @@ function Withdraw() {
       return;
     }
 
+    // Make API call to withdraw
     fetch('/account/withdraw', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -60,7 +54,11 @@ function Withdraw() {
       .then(response => {
         if (!response.ok) {
           setVariant('danger');
-          throw new Error(`Network response was not ok: ${response.statusText}`);
+          if (response.statusText.includes('User not found')) {
+            throw new Error('Withdraw failed because email is unknown. Please use login email.');
+          } else {
+            throw new Error(`Network response was not ok: ${response.statusText}`);
+          }
         }
         return response.json();
       })
@@ -97,25 +95,68 @@ function Withdraw() {
             setAmountError={setAmountError}
             handleWithdrawal={handleWithdrawal}
             loadingBalance={loadingBalance}
+            balance={balance}
+            fetchBalance={fetchBalance}
           />
         ) : (
-          <WithdrawMsg handleWithdrawAgain={handleWithdrawAgain} />
+          <WithdrawMsg handleWithdrawAgain={handleWithdrawAgain} balance={balance} />
         )}
       </Card.Body>
     </Card>
   );
 }
 
-function WithdrawForm({ email, setEmail, amount, setAmount, amountError, setAmountError, handleWithdrawal, loadingBalance }) {
+function WithdrawForm({ email, setEmail, amount, setAmount, amountError, setAmountError, handleWithdrawal, loadingBalance, balance, fetchBalance }) {
+  const [error, setError] = useState('');
+
+  const MIN_WITHDRAWAL_AMOUNT = 1; // Minimum withdrawal amount allowed
+
+  function handleAmountChange(value) {
+    setAmount(value);
+    validateAmount(value);
+  }
+
+  function validateAmount(value) {
+    const parsedAmount = parseFloat(value);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setAmountError('Amount must be a positive number.');
+    } else if (parsedAmount > balance) {
+      setAmountError('Withdrawal amount exceeds current balance.');
+    } else {
+      setAmountError('');
+    }
+  }
+
+  function handle() {
+    setError(''); // Reset any previous error state
+
+    // Validate email input
+    if (!email) {
+      setError('An email is required to proceed.');
+      return;
+    }
+
+    // Validate amount input
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0 || parsedAmount > balance) {
+      setError('Invalid withdrawal amount.');
+      return;
+    }
+
+    // Call handleWithdrawal function
+    handleWithdrawal();
+  }
+
   return (
     <Form>
       <Form.Group className="mb-3">
         <Form.Label>Email address</Form.Label>
         <Form.Control
-          type="email"
+          type="text"
           placeholder="Enter email"
           value={email}
           onChange={e => setEmail(e.currentTarget.value)}
+          onBlur={fetchBalance} // Fetch balance when the email field loses focus
         />
       </Form.Group>
       <Form.Group className="mb-3">
@@ -124,13 +165,13 @@ function WithdrawForm({ email, setEmail, amount, setAmount, amountError, setAmou
           type="number"
           placeholder="Enter amount"
           value={amount}
-          onChange={e => setAmount(e.currentTarget.value)}
-          isInvalid={!!amountError}
+          onChange={e => handleAmountChange(e.currentTarget.value)}
+          isInvalid={!!amountError || !!error}
           disabled={loadingBalance} // Disable input while balance is loading
         />
-        <Form.Control.Feedback type="invalid">{amountError}</Form.Control.Feedback>
+        <Form.Control.Feedback type="invalid">{amountError || error}</Form.Control.Feedback>
       </Form.Group>
-      <Button variant="primary" onClick={handleWithdrawal} disabled={loadingBalance}>
+      <Button variant="primary" onClick={handle} disabled={loadingBalance}>
         Withdraw
       </Button>
     </Form>
@@ -141,7 +182,7 @@ function WithdrawMsg({ handleWithdrawAgain, balance }) {
   return (
     <>
       <h5>Success</h5>
-      <p>New Balance: {balance}</p> {/* Added this line to display the new balance */}
+      <p>New Balance: {balance}</p>
       <Button variant="primary" onClick={handleWithdrawAgain}>
         Withdraw again
       </Button>

@@ -83,7 +83,24 @@ const UserProfile = () => {
   
 
   const handleChange = (event) => {
-    setUserData({ ...userData, [event.target.name]: event.target.value });
+    const { name, value } = event.target;
+    
+    // Format phone number as user types
+    if (name === 'phoneNumber') {
+      // Remove any non-digit characters from the input value
+      const formattedPhoneNumber = value.replace(/\D/g, '');
+      // Add formatting based on the length of the phone number
+      if (formattedPhoneNumber.length <= 3) {
+        setUserData({ ...userData, [name]: formattedPhoneNumber });
+      } else if (formattedPhoneNumber.length <= 6) {
+        setUserData({ ...userData, [name]: `(${formattedPhoneNumber.slice(0, 3)}) ${formattedPhoneNumber.slice(3)}` });
+      } else {
+        setUserData({ ...userData, [name]: `(${formattedPhoneNumber.slice(0, 3)}) ${formattedPhoneNumber.slice(3, 6)}-${formattedPhoneNumber.slice(6, 10)}` });
+      }
+    } else {
+      // For other fields, update state directly
+      setUserData({ ...userData, [name]: value });
+    }
   };
 
   const validateForm = () => {
