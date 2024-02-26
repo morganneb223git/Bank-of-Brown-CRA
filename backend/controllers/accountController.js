@@ -39,22 +39,6 @@ router.post('/create', async (req, res) => {
     }
 });
 
-/**
- * POST /create
- * Route to create a new bank account. It uses the user email to send new bank accout number and account type
- * then stores it under the user:email.
- */
-router.post('/createbank', async (req, res) => {
-    const { email, accountType } = req.body;
-
-    try {
-        const user = await dal.createBankAccount(email, accountType);
-        res.status(200).json({ message: 'Bank account created successfully', user });
-    } catch (error) {
-        console.error('Error creating bank account:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
 
 
 
@@ -127,22 +111,17 @@ router.post('/findOne', async (req, res) => {
  * Updates user information for the specified email. Can update name and password.
  */
 router.post('/update', async (req, res) => {
-  const { accountNumber, name, password } = req.body;
-  let updateData = { name };
-  if (password) {
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    updateData.password = hashedPassword;
-  }
-  try {
-    const updatedUser = await dal.update(accountNumber, updateData);
-    if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
+    const { email, name, password } = req.body;
+    try {
+        const updatedUser = await dal.update(email, { name, password });
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ message: 'User information updated successfully', user: updatedUser });
+    } catch (error) {
+        console.error('Error updating user information:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-    res.status(200).json({ message: 'User information updated successfully', user: updatedUser });
-  } catch (error) {
-    console.error('Error updating user information:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
 });
 
 /**
@@ -227,9 +206,9 @@ router.get('/balance/:email', async (req, res) => {
  * Retrieves user data based on the provided email.
  */
 router.get('/data', async (req, res) => {
-    const { email } = req.query;
+    const userEmail = req.query.email;
     try {
-        const user = await dal.findOne(email);
+        const user = await dal.findUserByEmail(userEmail); // Use dal.findUserByEmail to retrieve user by email
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -240,6 +219,70 @@ router.get('/data', async (req, res) => {
     }
 });
 
+// Endpoint to fetch user account information
+router.get('/profile', async (req, res) => {
+    const userEmail = req.query.email;
+    console.log(`Profile request received for email: ${userEmail}`); // Log the email for which profile is requested
+
+    try {
+        // Use the findOne method to search for the user by email
+        const userData = await dal.findOne(userEmail);
+        console.log('User data found:', userData); // Log the user data found
+
+        // If no user data is found, respond with a 404 error
+        if (!userData) {
+            return res.status(404).json({ message: 'User account information not found' });
+        }
+
+        // If user data is found, respond with the user data
+        res.json(userData);
+    } catch (error) {
+        console.error('Error fetching user account information:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.put('/update-profile', async (req, res) => {
+    const { email, name, phoneNumber } = req.body;
+  
+    try {
+      const user = await dal.findUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      // Update the user's name and phone number
+      user.name = name;
+      user.phoneNumber = phoneNumber;
+  
+      // Save the updated user object
+      await user.save();
+  
+      res.json({ message: 'Profile updated successfully' });
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  /**
+ * POST /createbank
+ * Route to create a new bank account. It uses the user email to send new bank accout number and account type
+ * then stores it under the user:email.
+ */
+router.post('/createbank', async (req, res) => {
+    const { email, accountType } = req.body;
+
+    try {
+        const user = await dal.createBankAccount(email, accountType);
+        res.status(200).json({ message: 'Bank account created successfully', user });
+    } catch (error) {
+        console.error('Error creating bank account:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+  
 
 // Export the router for use in the main server file
 module.exports = router;

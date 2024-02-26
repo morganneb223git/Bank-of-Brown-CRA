@@ -160,6 +160,42 @@ async function createUser({ name, email, password, accountNumber }) {
 }
 
 /**
+ * Creates a new user in the database.
+ * @param {string} name User's name.
+ * @param {string} email User's email.
+ * @param {string} password User's password.
+ * @returns The created user object.
+ */
+async function create(name, email, password) {
+  try {
+      const { db } = await connectToMongo();
+      const collection = db.collection('users');
+      const doc = { name, email, password, balance: 0 };
+      const result = await collection.insertOne(doc);
+      return result.ops[0];
+  } catch (err) {
+      logger.error(`Error creating user: ${err.message}`, { stack: err.stack });
+      throw err;
+  }
+}
+
+/**
+* Finds users by email.
+* @param {string} email Email to search for.
+* @returns An array of user objects with the matching email.
+*/
+async function find(email) {
+  try {
+      const { db } = await connectToMongo();
+      return db.collection('users').find({ email }).toArray();
+  } catch (err) {
+      logger.error(`Error finding user by email: ${err.message}`, { stack: err.stack });
+      throw err;
+  }
+}
+
+
+/**
  * Finds users by email.
  * @param {string} email Email to search for.
  * @returns {Array<Object>} An array of user objects with the matching email.
@@ -177,20 +213,22 @@ async function findUsersByEmail(email) {
 /**
  * Finds a single user by email.
  * @param {string} email Email to search for.
- * @returns {Object|null} A user object with the matching email or null if not found.
+ * @returns {Object|null} An object containing user values or null if not found.
  */
 async function findUserByEmail(email) {
-    try {
-        const { db } = await connectToMongo();
-        const user = await db.collection('users').findOne({ email });
-        if (!user) {
-            throw new Error("User not found.");
-        }
-        return user;
-    } catch (err) {
-        logger.error(`Error finding one user by email: ${err.message}`, { stack: err.stack });
-        throw err;
-    }
+  try {
+      const { db } = await connectToMongo();
+      const user = await db.collection('users').findOne({ email });
+      if (!user) {
+          throw new Error("User not found.");
+      }
+      // Extract specific user values
+      const { accountNumber, accountType, balance, name, phoneNumber } = user;
+      return { accountNumber, accountType, balance, name, phoneNumber };
+  } catch (err) {
+      logger.error(`Error finding user values by email: ${err.message}`, { stack: err.stack });
+      throw err;
+  }
 }
 
 /**
@@ -214,23 +252,6 @@ async function updateUserByEmail(email, newData) {
     }
 }
 
-/**
- * Sets up the data access layer.
- * @returns {Promise<Object>} The database instance and a function to stop the database.
- */
-async function setupDAL() {
-    return await connectToMongo();
-}
-
-/**
- * Disconnects from MongoDB when the application is terminating or when needed.
- */
-async function disconnectFromMongo() {
-    if (client) {
-        await client.close();
-        logger.info('Disconnected from MongoDB.');
-    }
-}
 
 async function createBankAccount(email, accountType) {
   try {
@@ -242,6 +263,32 @@ async function createBankAccount(email, accountType) {
       throw error;
   }
 }
+
+
+// DAL function to find user account information by email
+async function findUserAccountInfoByEmail(email) {
+  try {
+    const { db } = await connectToMongo();
+    
+    // Debugging: Log the email being used in the query
+    console.log('Searching for user account information for email:', email);
+    
+    const userData = await db.collection('users').findOne(
+      { email }, 
+      { projection: { accountNumber: 1, accountType: 1, balance: 1 } }
+    );
+
+    // Debugging: Log the retrieved user data
+    console.log('Retrieved user account information:', userData);
+
+    return userData;
+  } catch (err) {
+    console.error(`Error finding user account information by email: ${err.message}`);
+    throw err;
+  }
+}
+
+
 
 /**
  * Updates user information in the database.
@@ -271,11 +318,136 @@ async function update(email, newData) {
   }
 }
 
+/**
+ * Finds a single user by email.
+ * @param {string} email Email to search for.
+ * @returns A user object with the matching email or null.
+ */
+async function findOne(email) {
+  try {
+      const { db } = await connectToMongo();
+      const user = await db.collection('users').findOne({ email });
+      if (!user) {
+          throw new Error("User not found.");
+      }
+      return user;
+  } catch (err) {
+      logger.error(`Error finding one user by email: ${err.message}`, { stack: err.stack });
+      throw err;
+  }
+}
+
+/**
+ * Finds a single document in a specified collection matching the given query.
+ * @param {string} collectionName The name of the collection.
+ * @param {Object} query The query to match documents.
+ * @returns {Promise<Object|null>} The found document, or null if not found.
+ */
+async function findOneDocument(collectionName, query) {
+  const { db } = await connectToMongo();
+  try {
+      const document = await db.collection(collectionName).findOne(query);
+      if (document) {
+          logger.info('Document found:', document);
+      } else {
+          logger.info('No document matches the query.');
+      }
+      return document;
+  } catch (error) {
+      logger.error('Failed to find document:', error);
+      throw error;
+  }
+}
+
+/**
+ * Deposits an amount to a user's account.
+ * @param {string} email Email of the user.
+ * @param {number} amount Amount to deposit.
+ * @returns The updated user object.
+ */
+async function deposit(email, amount) {
+  try {
+      const { db } = await connectToMongo();
+      const result = await db.collection('users').findOneAndUpdate(
+          { email },
+          { $inc: { balance: amount } },
+          { returnDocument: 'after' }
+      );
+      if (amount <= 0) {
+          throw new Error("Amount must be positive.");
+      }
+      if (!result.value) {
+          throw new Error("User not found.");
+      }
+      return result.value;
+  } catch (err) {
+      logger.error(`Error depositing amount: ${err.message}`, { stack: err.stack });
+      throw err;
+  }
+}
+
+async function withdraw(email, amount) {
+  try {
+      const { db } = await connectToMongo();
+      const user = await db.collection('users').findOne({ email });
+      if (amount <= 0) {
+          throw new Error("Amount must be positive.");
+      }
+      if (!user) {
+          throw new Error("User not found.");
+      }
+      if (user.balance < amount) {
+          throw new Error("Insufficient funds.");
+      }
+      const result = await db.collection('users').findOneAndUpdate(
+          { email },
+          { $inc: { balance: -amount } },
+          { returnDocument: 'after' }
+      );
+      return result.value;
+  } catch (err) {
+      logger.error(`Error withdrawing amount: ${err.message}`, { stack: err.stack });
+      throw err;
+  }
+}
+/**
+* Retrieves all users from the database.
+* @returns An array of all user objects.
+*/
+async function all() {
+  try {
+      const { db } = await connectToMongo();
+      return db.collection('users').find({}).toArray();
+  } catch (err) {
+      logger.error(`Error retrieving all users: ${err.message}`, { stack: err.stack });
+      throw err;
+  }
+}
+
+
+/**
+ * Sets up the data access layer.
+ * @returns {Promise<Object>} The database instance and a function to stop the database.
+ */
+async function setupDAL() {
+  return await connectToMongo();
+}
+
+/**
+* Disconnects from MongoDB when the application is terminating or when needed.
+*/
+async function disconnectFromMongo() {
+  if (client) {
+      await client.close();
+      logger.info('Disconnected from MongoDB.');
+  }
+}
 
 // Exporting all the functions to be used elsewhere in the application.
 module.exports = {
     connectToMongo,
     getDb,
+    findOneDocument,
     createDocument,
     findDocument,
     updateDocument,
@@ -287,5 +459,12 @@ module.exports = {
     updateUserByEmail,
     setupDAL,
     createBankAccount,
-    update
+    update,
+    findOne,
+    findUserAccountInfoByEmail,
+    deposit,
+    withdraw,
+    all,
+    create,
+    find
 };

@@ -1,6 +1,3 @@
-// models/user.js 
-//// ./backend/models/user.js
-
 const mongoose = require('mongoose');
 
 /**
@@ -40,6 +37,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Account number is required'],
     unique: true,
+  },
+  // User's phone number
+  phoneNumber: {
+    type: String,
+    required: [true, 'Phone number is required'],
   },
   // New role field
   role: {
