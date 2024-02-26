@@ -49,7 +49,7 @@ function Balance() {
               value={email} 
               onChange={e => setEmail(e.currentTarget.value)} />
           </Form.Group>
-          <Button variant="light" onClick={handleCheckBalance}>
+          <Button variant="primary" onClick={handleCheckBalance}>
             Check Balance
           </Button>
           {/* Display balance if it has been set */}

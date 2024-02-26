@@ -109,9 +109,7 @@ function Withdraw() {
 function WithdrawForm({ email, setEmail, amount, setAmount, amountError, setAmountError, handleWithdrawal, loadingBalance, balance, fetchBalance }) {
   const [error, setError] = useState('');
 
-  const MIN_WITHDRAWAL_AMOUNT = 1; // Minimum withdrawal amount allowed
-
-  function handleAmountChange(value) {
+    function handleAmountChange(value) {
     setAmount(value);
     validateAmount(value);
   }
