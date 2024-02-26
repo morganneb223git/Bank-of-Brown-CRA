@@ -27,22 +27,35 @@ router.post('/create', async (req, res) => {
             return res.status(409).json({ message: 'User already exists' });
         }
 
-        // Generate a unique account number
         const accountNumber = Math.floor(1000000000 + Math.random() * 9000000000);
-
-        // Hash the password
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // Create the user with the hashed password and generated account number
-        const user = await dal.create({ name, email, password: hashedPassword });
+        const user = await dal.create({ name, email, password: hashedPassword, accountNumber });
 
-        // Respond with the user data including the account number
-        res.status(201).json({ message: 'Account successfully created', user, accountNumber });
+        res.status(201).json({ message: 'Account successfully created', user }); // No need to separately add accountNumber here
     } catch (error) {
         console.error('Error creating user:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
+/**
+ * POST /create
+ * Route to create a new bank account. It uses the user email to send new bank accout number and account type
+ * then stores it under the user:email.
+ */
+router.post('/createbank', async (req, res) => {
+    const { email, accountType } = req.body;
+
+    try {
+        const user = await dal.createBankAccount(email, accountType);
+        res.status(200).json({ message: 'Bank account created successfully', user });
+    } catch (error) {
+        console.error('Error creating bank account:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 
 
 /**
@@ -205,6 +218,24 @@ router.get('/balance/:email', async (req, res) => {
         res.json({ message: 'Balance retrieval successful', balance: user.balance });
     } catch (error) {
         console.error('Error retrieving balance:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+/**
+ * GET /data
+ * Retrieves user data based on the provided email.
+ */
+router.get('/data', async (req, res) => {
+    const { email } = req.query;
+    try {
+        const user = await dal.findOne(email);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(user);
+    } catch (error) {
+        console.error('Error retrieving user data:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });

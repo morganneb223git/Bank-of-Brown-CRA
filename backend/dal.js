@@ -1,5 +1,3 @@
-// dal.js file ./backend/dal.js
-
 // Load environment variables for MongoDB connection strings and other configurations.
 require('dotenv').config();
 
@@ -44,9 +42,6 @@ function getDb() {
     return db;
 }
 
-// Below are the database operations: create, find, findOne, update, deposit, withdraw, and all.
-// Each function is documented with jsdoc comments for clarity on parameters and return values.
-
 /**
  * Inserts a new document into the specified collection.
  * @param {string} collectionName - The name of the collection.
@@ -64,90 +59,86 @@ async function createDocument(collectionName, document) {
         throw error;
     }
 }
-  
 
-  /**
-   * Finds a document in a specified collection matching the given query.
-   * @param {string} collectionName The name of the collection.
-   * @param {Object} query The query to match documents.
-   * @returns {Promise<Object|null>} The found document, or null if not found.
-   */
-  async function findDocument(collectionName, query) {
+/**
+ * Finds a document in a specified collection matching the given query.
+ * @param {string} collectionName The name of the collection.
+ * @param {Object} query The query to match documents.
+ * @returns {Promise<Object|null>} The found document, or null if not found.
+ */
+async function findDocument(collectionName, query) {
     const { db } = await connectToMongo();
     try {
-      const document = await db.collection(collectionName).findOne(query);
-      if (document) {
-        logger.info('Document found:', document);
-      } else {
-        logger.info('No document matches the query.');
-      }
-      return document;
+        const document = await db.collection(collectionName).findOne(query);
+        if (document) {
+            logger.info('Document found:', document);
+        } else {
+            logger.info('No document matches the query.');
+        }
+        return document;
     } catch (error) {
-      logger.error('Failed to find document:', error);
-      throw error;
+        logger.error('Failed to find document:', error);
+        throw error;
     }
-  }
-  
-  /**
-   * Updates a document in a specified collection matching the given query.
-   * @param {string} collectionName The name of the collection.
-   * @param {Object} query The query to match documents.
-   * @param {Object} update The update operations to apply.
-   * @returns {Promise<Object>} The result of the update operation.
-   */
-  async function updateDocument(collectionName, query, update) {
+}
+
+/**
+ * Updates a document in a specified collection matching the given query.
+ * @param {string} collectionName The name of the collection.
+ * @param {Object} query The query to match documents.
+ * @param {Object} update The update operations to apply.
+ * @returns {Promise<Object>} The result of the update operation.
+ */
+async function updateDocument(collectionName, query, update) {
     const { db } = await connectToMongo();
     try {
-      const result = await db.collection(collectionName).updateOne(query, { $set: update });
-      if (result.matchedCount && result.modifiedCount) {
-        logger.info('Document updated successfully.');
-      } else {
-        logger.info('No matching document found or no new data to update.');
-      }
-      return result;
+        const result = await db.collection(collectionName).updateOne(query, { $set: update });
+        if (result.matchedCount && result.modifiedCount) {
+            logger.info('Document updated successfully.');
+        } else {
+            logger.info('No matching document found or no new data to update.');
+        }
+        return result;
     } catch (error) {
-      logger.error('Failed to update document:', error);
-      throw error;
+        logger.error('Failed to update document:', error);
+        throw error;
     }
-  }
-  
-  /**
-   * Deletes a document from a specified collection matching the given query.
-   * @param {string} collectionName The name of the collection.
-   * @param {Object} query The query to match documents.
-   * @returns {Promise<Object>} The result of the deletion operation.
-   */
-  async function deleteDocument(collectionName, query) {
+}
+
+/**
+ * Deletes a document from a specified collection matching the given query.
+ * @param {string} collectionName The name of the collection.
+ * @param {Object} query The query to match documents.
+ * @returns {Promise<Object>} The result of the deletion operation.
+ */
+async function deleteDocument(collectionName, query) {
     const { db } = await connectToMongo();
     try {
-      const result = await db.collection(collectionName).deleteOne(query);
-      if (result.deletedCount) {
-        logger.info('Document deleted successfully.');
-      } else {
-        logger.info('No matching document found to delete.');
-      }
-      return result;
+        const result = await db.collection(collectionName).deleteOne(query);
+        if (result.deletedCount) {
+            logger.info('Document deleted successfully.');
+        } else {
+            logger.info('No matching document found to delete.');
+        }
+        return result;
     } catch (error) {
-      logger.error('Failed to delete document:', error);
-      throw error;
+        logger.error('Failed to delete document:', error);
+        throw error;
     }
-  }
-  
+}
 
 /**
  * Creates a new user in the database.
  * @param {string} name User's name.
  * @param {string} email User's email.
  * @param {string} password User's password.
- * @returns The created user object.
+ * @param {string} accountNumber User's account number.
+ * @returns {Object} The created user object.
  */
-async function create({ name, email, password }) {
+async function createUser({ name, email, password, accountNumber }) {
     try {
         const { db } = await connectToMongo();
         const collection = db.collection('users');
-
-        // Generate an account number
-        const accountNumber = Math.floor(Math.random() * 1000000000);
 
         const doc = {
             name,
@@ -155,39 +146,25 @@ async function create({ name, email, password }) {
             password,
             balance: 0,
             accountNumber,
-            accountType: 'checking', // Assuming a default account type
-            role: 'user' // Assuming a default role
+            accountType: 'checking',
+            role: 'user'
         };
 
         const result = await collection.insertOne(doc);
-        
-        // Ensure the accountNumber is also returned as part of the result
-        const insertedUser = {
-            _id: result.ops[0]._id,
-            name: result.ops[0].name, 
-            email: result.ops[0].email, 
-            password: result.ops[0].password, 
-            balance: result.ops[0].balance,
-            accountNumber,
-            accountType: result.ops[0].accountType,
-            role: result.ops[0].role
-        };
 
-        return insertedUser;
+        return result.ops[0];
     } catch (err) {
         logger.error(`Error creating user: ${err.message}`, { stack: err.stack });
         throw err;
     }
 }
 
-
-
 /**
  * Finds users by email.
  * @param {string} email Email to search for.
- * @returns An array of user objects with the matching email.
+ * @returns {Array<Object>} An array of user objects with the matching email.
  */
-async function find(email) {
+async function findUsersByEmail(email) {
     try {
         const { db } = await connectToMongo();
         return db.collection('users').find({ email }).toArray();
@@ -200,9 +177,9 @@ async function find(email) {
 /**
  * Finds a single user by email.
  * @param {string} email Email to search for.
- * @returns A user object with the matching email or null.
+ * @returns {Object|null} A user object with the matching email or null if not found.
  */
-async function findOne(email) {
+async function findUserByEmail(email) {
     try {
         const { db } = await connectToMongo();
         const user = await db.collection('users').findOne({ email });
@@ -220,133 +197,95 @@ async function findOne(email) {
  * Updates a user's data.
  * @param {string} email Email of the user to update.
  * @param {Object} newData New data for the user.
- * @returns The updated user object.
+ * @returns {Object} The updated user object.
  */
-async function update(accountNumber, newData) {
-  try {
-    const { db } = await connectToMongo();
-    const result = await db.collection('users').findOneAndUpdate(
-      { accountNumber }, // Use accountNumber as the filter
-      { $set: newData },
-      { returnDocument: 'after' }
-    );
-    return result.value;
-  } catch (err) {
-    logger.error(`Error updating user data: ${err.message}`, { stack: err.stack });
-    throw err;
-  }
-}
-
-/**
- * Deposits an amount to a user's account.
- * @param {string} email Email of the user.
- * @param {number} amount Amount to deposit.
- * @returns The updated user object.
- */
-async function deposit(email, amount) {
+async function updateUserByEmail(email, newData) {
     try {
         const { db } = await connectToMongo();
         const result = await db.collection('users').findOneAndUpdate(
             { email },
-            { $inc: { balance: amount } },
-            { returnDocument: 'after' }
-        );
-        if (amount <= 0) {
-            throw new Error("Amount must be positive.");
-        }
-        if (!result.value) {
-            throw new Error("User not found.");
-        }
-        return result.value;
-    } catch (err) {
-        logger.error(`Error depositing amount: ${err.message}`, { stack: err.stack });
-        throw err;
-    }
-}
-
-/**
- * Withdraws an amount from a user's account.
- * @param {string} email Email of the user.
- * @param {number} amount Amount to withdraw.
- * @returns The updated user object.
- */
-async function withdraw(email, amount) {
-    try {
-        const { db } = await connectToMongo();
-        const user = await db.collection('users').findOne({ email });
-        if (amount <= 0) {
-            throw new Error("Amount must be positive.");
-        }
-        if (!user) {
-            throw new Error("User not found.");
-        }
-        if (user.balance < amount) {
-            throw new Error("Insufficient funds.");
-        }
-        const result = await db.collection('users').findOneAndUpdate(
-            { email },
-            { $inc: { balance: -amount } },
+            { $set: newData },
             { returnDocument: 'after' }
         );
         return result.value;
     } catch (err) {
-        logger.error(`Error withdrawing amount: ${err.message}`, { stack: err.stack });
-        throw err;
-    }
-}
-
-/**
- * Retrieves all users from the database.
- * @returns An array of all user objects.
- */
-async function all() {
-    try {
-        const { db } = await connectToMongo();
-        return db.collection('users').find({}).toArray();
-    } catch (err) {
-        logger.error(`Error retrieving all users: ${err.message}`, { stack: err.stack });
+        logger.error(`Error updating user data: ${err.message}`, { stack: err.stack });
         throw err;
     }
 }
 
 /**
  * Sets up the data access layer.
- * @param {string} uri MongoDB URI.
- * @param {string} dbName Database name.
- * @returns The database instance and a function to stop the database.
+ * @returns {Promise<Object>} The database instance and a function to stop the database.
  */
-async function setupDAL(uri, dbName) {
-    return await connectToMongo(uri, dbName);
+async function setupDAL() {
+    return await connectToMongo();
 }
-
 
 /**
  * Disconnects from MongoDB when the application is terminating or when needed.
  */
 async function disconnectFromMongo() {
-  if (client) {
-      await client.close();
-      logger.info('Disconnected from MongoDB.');
+    if (client) {
+        await client.close();
+        logger.info('Disconnected from MongoDB.');
+    }
+}
+
+async function createBankAccount(email, accountType) {
+  try {
+      const accountNumber = Math.floor(1000000000 + Math.random() * 9000000000);
+      const newData = { accountNumber, accountType };
+      return await update(email, newData);
+  } catch (error) {
+      logger.error(`Error creating bank account: ${error.message}`, { stack: error.stack });
+      throw error;
   }
 }
 
+/**
+ * Updates user information in the database.
+ * @param {string} email - Email of the user to update.
+ * @param {Object} newData - New data for the user.
+ * @returns {Promise<Object|null>} - The updated user object, or null if user not found.
+ */
+async function update(email, newData) {
+  try {
+      const { db } = await connectToMongo();
+      const result = await db.collection('users').updateOne(
+          { email }, // Filter to find the user by email
+          { $set: newData } // Set the new data
+      );
+
+      if (result.modifiedCount === 1) {
+          // If one document was modified, return the updated user
+          const updatedUser = await db.collection('users').findOne({ email });
+          return updatedUser;
+      } else {
+          // If no document was modified, return null to indicate no update occurred
+          return null;
+      }
+  } catch (error) {
+      logger.error(`Error updating user: ${error.message}`, { stack: error.stack });
+      throw error;
+  }
+}
+
+
 // Exporting all the functions to be used elsewhere in the application.
 module.exports = {
-  connectToMongo,
-  getDb,
-  createDocument,
-  findDocument,
-  updateDocument,
-  deleteDocument,
-  disconnectFromMongo,
-  create,
-  find,
-  findOne,
-  update,
-  deposit,
-  withdraw,
-  all,
+    connectToMongo,
+    getDb,
+    createDocument,
+    findDocument,
+    updateDocument,
+    deleteDocument,
+    disconnectFromMongo,
+    createUser,
+    findUsersByEmail,
+    findUserByEmail,
+    updateUserByEmail,
+    setupDAL,
+    createBankAccount,
+    update
 };
-
-// Note: The implementations for findDocument, updateDocument, deleteDocument, create, find, findOne, update, deposit, withdraw, and all
-// are assumed to follow the pattern of createDocument, utilizing async/await, proper error handling, and logging.

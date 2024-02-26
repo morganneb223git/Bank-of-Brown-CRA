@@ -31,6 +31,91 @@ function CreateMsg(props) {
 }
 
 function CreateForm(props) {
+  const [email, setEmail] = React.useState('');
+  const [accountType, setAccountType] = React.useState('checking');
+  const [errors, setErrors] = React.useState({});
+
+  const handleCreateAccount = async () => {
+    console.log('Form submitted with email:', email, 'and account type:', accountType);
+  
+    if (!validateForm()) return;
+  
+    try {
+      const response = await fetch('/account/createbank', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, accountType }),
+      });
+  
+      console.log('Response received:', response);
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+  
+      const data = await response.json();
+      console.log('Data received:', data);
+  
+      if (data.user && data.user.accountNumber) {
+        props.setShow(false);
+        props.setStatus(`Account successfully created. Here is your new Account Number: ${data.user.accountNumber}.`);
+        props.setVariant('success');
+      } else {
+        throw new Error('Failed to retrieve account information or account number is missing');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      props.setStatus('Failed to create account. Please try again.');
+      props.setVariant('danger');
+    }
+  };
+  
+  const validateForm = () => {
+    let tempErrors = {};
+    if (!email) {
+      tempErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      tempErrors.email = "Email is invalid";
+    } else if (!/\S+@\S+\.(com|org|edu)$/.test(email)) {
+      tempErrors.email = "Email must end with .com, .org, or .edu";
+    }
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
+  };
+
+  return (
+    <Form>
+      <Form.Group className="mb-3">
+        <Form.Label>Email address</Form.Label>
+        <Form.Control 
+          type="email" 
+          placeholder="Enter email" 
+          value={email} 
+          isInvalid={!!errors.email} 
+          onChange={e => setEmail(e.currentTarget.value)} />
+        <Form.Control.Feedback type="invalid">
+          {errors.email}
+        </Form.Control.Feedback>
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Account Type</Form.Label>
+        <Form.Select value={accountType} onChange={e => setAccountType(e.currentTarget.value)}>
+          <option value="checking">Checking</option>
+          <option value="savings">Savings</option>
+        </Form.Select>
+      </Form.Group>
+
+      <Button variant="primary" onClick={handleCreateAccount}>Create Account</Button>
+    </Form>
+  );
+}
+
+
+/*
+OLD CREATE ACCOUNT CREATEFORM
+
+function CreateForm(props) {
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -76,10 +161,11 @@ function CreateForm(props) {
     .then(data => {
       console.log(data);
       props.setShow(false);
-      // Update the status message to include the account number
-      props.setStatus(`Account successfully created. Account Number: ${data.accountNumber}. Please log in.`);
+      // Correctly access the accountNumber from the user object in the response
+      props.setStatus(`Account successfully created. Here is your new Account Number: ${data.user.accountNumber}.`);
       props.setVariant('success');
     })
+    
     .catch(error => {
       console.error('Error:', error);
       props.setStatus('Failed to create account. Please try again.');
@@ -90,7 +176,7 @@ function CreateForm(props) {
 
   return (
     <Form>
-      {/* Name field */}
+      {/* Name field *//*}
       <Form.Group className="mb-3">
         <Form.Label>Name</Form.Label>
         <Form.Control 
@@ -104,7 +190,9 @@ function CreateForm(props) {
         </Form.Control.Feedback>
       </Form.Group>
 
-      {/* Email field */}
+      {/* Email field */
+    /*
+    }
       <Form.Group className="mb-3">
         <Form.Label>Email address</Form.Label>
         <Form.Control 
@@ -118,7 +206,7 @@ function CreateForm(props) {
         </Form.Control.Feedback>
       </Form.Group>
 
-      {/* Password field */}
+      {/* Password field *//*}
       <Form.Group className="mb-3">
         <Form.Label>Password</Form.Label>
         <Form.Control 
@@ -136,5 +224,5 @@ function CreateForm(props) {
     </Form>
   );
 }
-
+*/
 export default CreateAccount;

@@ -27,6 +27,7 @@ const Profile = () => {
       })
       .then((response) => response.json())
       .then((data) => {
+        console.log("Fetched user data:", data); // Add this line to debug
         setUserData({
           accountNumber: data.accountNumber,
           accountType: data.accountType,
