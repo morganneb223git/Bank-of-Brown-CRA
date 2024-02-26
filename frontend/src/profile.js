@@ -27,8 +27,8 @@ const UserProfile = () => {
         setUserData({
           email: user.email,
           accountNumber: data.accountNumber,
-          accountType: data.accountType,
-          balance: data.balance,
+          accountType: capitalizeFirstLetter(data.accountType),
+          balance: formatBalance(data.balance),
           name: data.name || 'type your name',
           phoneNumber: data.phoneNumber || 'type your phone number'
         });
@@ -42,6 +42,16 @@ const UserProfile = () => {
       fetchUserData();
     }
   }, [isAuthenticated, user]);
+
+   // Function to capitalize the first letter of a string
+   const capitalizeFirstLetter = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
+  // Function to format balance as "$00.00"
+  const formatBalance = (balance) => {
+    return `$${Number(balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   const handleUpdateProfile = async () => {
     try {
