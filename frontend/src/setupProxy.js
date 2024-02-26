@@ -9,7 +9,7 @@ module.exports = function(app) {
   // Define the proxy middleware using the createProxyMiddleware function.
   // The options object passed to this function can be customized to fit your proxy needs.
   const proxyMiddleware = createProxyMiddleware({
-    target: 'http://localhost:8000', // The target URL to proxy requests to. Change this to your backend server's address.
+    target: 'https://bank-of-brown-4a50fa93ed19.herokuapp.com/', // The target URL to proxy requests to. Change this to your backend server's address.
     changeOrigin: true, // Set to true to modify the origin header to match the target URL.
     // This is particularly useful to bypass Host/origin checks performed by the backend.
     logLevel: 'debug', // Enable debugging 

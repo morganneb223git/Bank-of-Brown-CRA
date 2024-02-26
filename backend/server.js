@@ -12,9 +12,12 @@ const { errorHandler } = require('./middlewares/errorMiddleware'); // Custom err
 const accountRouter = require('./controllers/accountController'); // Router for account-related routes
 const userRouter = require('./controllers/userController'); // Router for user-related routes
 const transactionRouter = require('./controllers/transactionController'); // Router for transaction-related routes
+
+/*
 const fs = require('fs'); // File system module for reading SSL certificate files
 const https = require('https'); // HTTPS module for HTTPS server
 const http = require('http'); // HTTP module for HTTP server
+*/
 
 const app = express();
 
@@ -47,6 +50,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000; // Default to port 5000 if no PORT env var is specified
 const isProduction = process.env.NODE_ENV === 'production'; // Check if the environment is production
 
+/*
 if (isProduction) {
   // If in production, create an HTTPS server
   const options = {
@@ -62,3 +66,5 @@ if (isProduction) {
     console.log(`HTTP Server running on port ${PORT}`);
   });
 }
+
+*/

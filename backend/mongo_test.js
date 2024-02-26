@@ -1,5 +1,10 @@
+//mongo_test.js 
+
+// Load environment variables from .env file
+require('dotenv').config();
+
 const MongoClient = require('mongodb').MongoClient;
-const url = 'mongodb://localhost:27017';
+const url = process.env.MONGODB_URI
  
 // connect to mongo
 MongoClient.connect(url, {useUnifiedTopology: true}, function(err, client) {
