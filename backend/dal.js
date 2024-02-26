@@ -424,6 +424,26 @@ async function all() {
   }
 }
 
+/**
+ * Updates the user profile with the provided email.
+ * @param {string} email The email of the user to update.
+ * @param {string} name The new name for the user.
+ * @param {string} phoneNumber The new phone number for the user.
+ * @returns {Promise<void>} A Promise that resolves when the profile is updated successfully.
+ */
+async function updateUserProfile(email, name, phoneNumber) {
+    try {
+        // Update the user's name and phone number
+        await db.collection('users').updateOne({ email }, { $set: { name, phoneNumber } });
+        
+        // Operation completed successfully
+        console.log('Profile updated successfully');
+    } catch (error) {
+        console.error('Error updating user profile:', error);
+        throw error;
+    }
+}
+  
 
 /**
  * Sets up the data access layer.
@@ -466,5 +486,6 @@ module.exports = {
     withdraw,
     all,
     create,
-    find
+    find,
+    updateUserProfile
 };

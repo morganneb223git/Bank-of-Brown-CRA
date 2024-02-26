@@ -246,20 +246,13 @@ router.put('/update-profile', async (req, res) => {
     const { email, name, phoneNumber } = req.body;
   
     try {
-      const user = await dal.findUserByEmail(email);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
+      // Call the DAL function to update the user profile
+      await dal.updateUserProfile(email, name, phoneNumber);
   
-      // Update the user's name and phone number
-      user.name = name;
-      user.phoneNumber = phoneNumber;
-  
-      // Save the updated user object
-      await user.save();
-  
+      // Respond with success message
       res.json({ message: 'Profile updated successfully' });
     } catch (error) {
+      // Handle any errors that occurred during the update process
       console.error('Error updating user profile:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
