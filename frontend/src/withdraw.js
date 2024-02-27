@@ -43,7 +43,7 @@ function Withdraw() {
     }
 
     // Make API call to withdraw
-    fetch('/account/withdraw', {
+    fetch('account/withdraw', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

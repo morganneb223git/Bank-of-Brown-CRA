@@ -10,15 +10,16 @@ const UserProfile = () => {
     accountType: '',
     balance: '',
     name: 'type your name',
-    phoneNumber: 'type your phone number'
+    phoneNumber: ''
   });
+  const [formattedPhoneNumber, setFormattedPhoneNumber] = useState('');
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const fetchUserData = async () => {
       console.log('Fetching user data...');
       try {
-        const response = await fetch(`account/profile?email=${user.email}`);
+        const response = await fetch(`/account/profile?email=${user.email}`);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -30,8 +31,9 @@ const UserProfile = () => {
           accountType: capitalizeFirstLetter(data.accountType),
           balance: formatBalance(data.balance),
           name: data.name || 'type your name',
-          phoneNumber: data.phoneNumber || 'type your phone number'
+          phoneNumber: data.phoneNumber || ''
         });
+        setFormattedPhoneNumber(formatPhoneNumber(data.phoneNumber));
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
@@ -44,7 +46,7 @@ const UserProfile = () => {
   }, [isAuthenticated, user]);
 
    // Function to capitalize the first letter of a string
-   const capitalizeFirstLetter = (str) => {
+  const capitalizeFirstLetter = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
@@ -53,10 +55,21 @@ const UserProfile = () => {
     return `$${Number(balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  // Function to format phone number
+  const formatPhoneNumber = (phoneNumber) => {
+    if (!phoneNumber) return '';
+    const cleaned = ('' + phoneNumber).replace(/\D/g, '');
+    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+    if (match) {
+      return '(' + match[1] + ') ' + match[2] + '-' + match[3];
+    }
+    return phoneNumber;
+  };
+
   const handleUpdateProfile = async () => {
     try {
       // Send the updated user data from the state directly
-      const response = await fetch('account/update-profile', {
+      const response = await fetch('/account/update-profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -80,26 +93,12 @@ const UserProfile = () => {
       console.error('Error updating profile:', error);
     }
   };
-  
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    
-    // Format phone number as user types
+    setUserData({ ...userData, [name]: value });
     if (name === 'phoneNumber') {
-      // Remove any non-digit characters from the input value
-      const formattedPhoneNumber = value.replace(/\D/g, '');
-      // Add formatting based on the length of the phone number
-      if (formattedPhoneNumber.length <= 3) {
-        setUserData({ ...userData, [name]: formattedPhoneNumber });
-      } else if (formattedPhoneNumber.length <= 6) {
-        setUserData({ ...userData, [name]: `(${formattedPhoneNumber.slice(0, 3)}) ${formattedPhoneNumber.slice(3)}` });
-      } else {
-        setUserData({ ...userData, [name]: `(${formattedPhoneNumber.slice(0, 3)}) ${formattedPhoneNumber.slice(3, 6)}-${formattedPhoneNumber.slice(6, 10)}` });
-      }
-    } else {
-      // For other fields, update state directly
-      setUserData({ ...userData, [name]: value });
+      setFormattedPhoneNumber(formatPhoneNumber(value));
     }
   };
 
@@ -114,7 +113,7 @@ const UserProfile = () => {
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
   };
-
+  
   return (
     <>
       <Card className="mt-3 mb-3">
@@ -154,7 +153,7 @@ const UserProfile = () => {
               <Form.Control
                 type="text"
                 name="phoneNumber"
-                value={userData.phoneNumber}
+                value={formattedPhoneNumber}
                 onChange={handleChange}
                 isInvalid={!!errors.phoneNumber}
               />
